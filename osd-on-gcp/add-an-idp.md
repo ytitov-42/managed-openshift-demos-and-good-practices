@@ -45,7 +45,7 @@ ocm create idp \
 Before configuring OIDC in OCM, register the following OAuth Callback URL in your external identity provider (Keycloak, Microsoft Entra ID, Okta, Google, etc.):
 
 ```text
-[https://oauth-openshift.apps](https://oauth-openshift.apps).<cluster-domain>/oauth2callback/<idp-name>
+https://oauth-openshift.apps.<cluster_name>.<cluster_domain>/oauth2callback/<idp_provider_name>
 ```
 
 * **Interactive mode** (the CLI will prompt you step-by-step for `name`, `client-id`, `client-secret`, `issuer-url`, and claims):
