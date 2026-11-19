@@ -11,11 +11,11 @@ ocm login --use-auth-code
 # For remote servers, SSH sessions, or headless environments without a browser
 ocm login --use-device-code
 
-# For scripts and CI/CD pipelines (generate a token at [https://console.redhat.com/openshift/token/show](https://console.redhat.com/openshift/token/show))
+# For scripts and CI/CD pipelines (generate a token at [https://console.redhat.com/openshift/token](https://console.redhat.com/openshift/token))
 ocm login --token="<offline-token>"
 ```
 
-Verify your active session, find your cluster ID, and inspect its base domain and API URL:
+Verify your active session, copy the cluster's alphanumeric `ID` from `ocm list clusters`, and check its `DNS` (used as `<cluster-domain>` below) and `API URL`:
 
 ```bash
 ocm whoami
@@ -23,7 +23,7 @@ ocm list clusters
 ocm describe cluster <cluster-id-or-name>
 ```
 
----
+> **Note:** While `ocm` subcommands like `ocm create idp` accept either `<cluster-id>` or `<cluster-name>`, the REST API commands (`ocm get` / `ocm post`) in sections 2 and 3 strictly require the alphanumeric `<cluster-id>`.
 
 ## 2. Create an Identity Provider (IDP)
 
@@ -40,6 +40,8 @@ ocm create idp \
   --password '<strong-password>'
 ```
 
+> **Note:** OCM enforces a password policy for `htpasswd` users: at least 14 characters, including uppercase letters, lowercase letters, and numbers or symbols (and it cannot contain the username).
+
 ### Option B: OpenID Connect (OIDC)
 
 Before configuring OIDC in OCM, register the following OAuth Callback URL in your external identity provider (Keycloak, Microsoft Entra ID, Okta, Google, etc.):
@@ -48,40 +50,40 @@ Before configuring OIDC in OCM, register the following OAuth Callback URL in you
 https://oauth-openshift.apps.<cluster_name>.<cluster_domain>/oauth2callback/<idp_provider_name>
 ```
 
-* **Interactive mode** (the CLI will prompt you step-by-step for `name`, `client-id`, `client-secret`, `issuer-url`, and claims):
-  ```bash
-  ocm create idp --type openid --cluster <cluster-id-or-name>
-  ```
+**Interactive mode** (the CLI prompts step-by-step for `name`, `client-id`, `client-secret`, `issuer-url`, and claims):
 
-* **Non-interactive mode** (for automation using the built-in OCM API client):
-  ```bash
-  ocm post /api/clusters_mgmt/v1/clusters/<cluster-id>/identity_providers <<EOF
-  {
-    "name": "corporate-oidc",
-    "type": "OpenIDIdentityProvider",
-    "mapping_method": "claim",
-    "open_id": {
-      "client_id": "<client-id>",
-      "client_secret": "<client-secret>",
-      "issuer": "https://<issuer-url>",
-      "claims": {
-        "email": ["email"],
-        "name": ["name"],
-        "preferred_username": ["preferred_username"],
-        "groups": ["groups"]
-      }
+```bash
+ocm create idp --type openid --cluster <cluster-id-or-name>
+```
+
+**Non-interactive mode** (for automation using the built-in OCM API client):
+
+```bash
+ocm post /api/clusters_mgmt/v1/clusters/<cluster-id>/identity_providers <<EOF
+{
+  "name": "corporate-oidc",
+  "type": "OpenIDIdentityProvider",
+  "mapping_method": "claim",
+  "open_id": {
+    "client_id": "<client-id>",
+    "client_secret": "<client-secret>",
+    "issuer": "https://<issuer-url>",
+    "claims": {
+      "email": ["email"],
+      "name": ["name"],
+      "preferred_username": ["preferred_username"],
+      "groups": ["groups"]
     }
   }
-  EOF
-  ```
+}
+EOF
+```
 
 Verify the configured identity providers on your cluster:
 
 ```bash
 ocm get /api/clusters_mgmt/v1/clusters/<cluster-id>/identity_providers
 ```
-
----
 
 ## 3. Grant Administrator Permissions
 
@@ -105,8 +107,6 @@ EOF
 
 > **Note:** The `id` value must match the exact username mapped from your IDP's `preferred_username` or `email` claim.
 
----
-
 ## 4. Log in to the OpenShift Cluster (`oc login`)
 
 IDP and group membership changes typically take 1–3 minutes to reconcile. Once applied, log in to the cluster using the `oc` CLI:
@@ -118,14 +118,12 @@ oc login https://api.<cluster-domain>:6443 -u admin -p '<strong-password>'
 # If using OIDC, open the token request endpoint in your browser:
 # [https://oauth-openshift.apps](https://oauth-openshift.apps).<cluster-domain>/oauth/token/request
 # Copy the displayed login command and run:
-oc login --token=<sha256~...> --server=https://api.<cluster-domain>:6443
+oc login --token='<sha256~...>' --server=https://api.<cluster-domain>:6443
 
 # Verify cluster access:
 oc whoami
 oc get nodes
 ```
-
----
 
 ## References
 
