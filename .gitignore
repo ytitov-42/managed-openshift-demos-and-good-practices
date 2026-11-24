@@ -1,0 +1,4 @@
+rosa/rosa-bgp-connector-operator-demo/scripts/state/handback.env
+rosa/rosa-bgp-connector-operator-demo/scripts/state/handoff.env
+rosa/rosa-bgp-connector-operator-demo/.serena/project.yml
+rosa/rosa-bgp-connector-operator-demo/.serena/.gitignore
